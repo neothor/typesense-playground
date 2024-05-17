@@ -123,6 +123,75 @@
 			"response": []
 		},
 		{
+			"name": "Get Companies Collection",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{hostname}}/collections/:collection",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"collections",
+						":collection"
+					],
+					"variable": [
+						{
+							"key": "collection",
+							"value": "companies"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Companies Collection",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"companies\",\r\n    \"fields\": [\r\n        {\r\n            \"name\": \"tenant\",\r\n            \"type\": \"string\"\r\n        },\r\n        {\r\n            \"name\": \"company_name\",\r\n            \"type\": \"string\"\r\n        },\r\n        {\r\n            \"name\": \"num_employees\",\r\n            \"type\": \"int32\"\r\n        },\r\n        {\r\n            \"name\": \"country\",\r\n            \"type\": \"string\",\r\n            \"facet\": true\r\n        }\r\n    ],\r\n    \"default_sorting_field\": \"num_employees\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{hostname}}/collections/:collection",
+					"host": [
+						"{{hostname}}"
+					],
+					"path": [
+						"collections",
+						":collection"
+					],
+					"variable": [
+						{
+							"key": "collection",
+							"value": "companies"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create Companies Collection",
 			"request": {
 				"method": "POST",
@@ -181,7 +250,7 @@
 			"response": []
 		},
 		{
-			"name": "Search for Stark",
+			"name": "Search",
 			"request": {
 				"method": "GET",
 				"header": []
@@ -189,7 +258,7 @@
 			"response": []
 		},
 		{
-			"name": "Search for Stark with TenantA",
+			"name": "Search with TenantA",
 			"event": [
 				{
 					"listen": "prerequest",
