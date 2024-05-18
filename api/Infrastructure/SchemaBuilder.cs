@@ -17,13 +17,13 @@
 
         public SchemaBuilder<T> AddField(Expression<Func<T, object>> expression, bool? facet = null, bool? optional = null, Func<(string name, FieldType type), Field>? ctor = null)
         {
-            _fields.Add(SchemaHelper.BuildField(expression, facet, optional, ctor));
+            _fields.Add(TypesenseHelper.BuildField(expression, facet, optional, ctor));
             return this;
         }
 
         public SchemaBuilder<T> SetDefaultSortingField(Expression<Func<T, object>> expression)
         {
-            _defaultSortingField = SchemaHelper.GetFieldName(expression);
+            _defaultSortingField = TypesenseHelper.GetFieldName(expression);
             return this;
         }
 
@@ -31,10 +31,10 @@
         {
             if(string.IsNullOrEmpty(_defaultSortingField))
             {
-                return new Schema(SchemaHelper.GetCollectionName<T>(), _fields);
+                return new Schema(TypesenseHelper.GetCollectionName<T>(), _fields);
             }
 
-            return new Schema(SchemaHelper.GetCollectionName<T>(), _fields, _defaultSortingField);
+            return new Schema(TypesenseHelper.GetCollectionName<T>(), _fields, _defaultSortingField);
         }
     }
 }

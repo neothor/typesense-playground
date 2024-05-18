@@ -1,11 +1,13 @@
 ﻿namespace Api.Infrastructure
 {
+    using System.Collections.Generic;
     using System.Linq.Expressions;
     using Api.Domain;
     using Humanizer;
     using Typesense;
+    using Typesense.Setup;
 
-    public static class SchemaHelper
+    public static class TypesenseHelper
     {
         public static SchemaBuilder<T> Create<T>() 
             where T : IIndexable
@@ -118,6 +120,13 @@
             {
                 throw new NotSupportedException($"Type '{type.FullName}' is not supported.");
             }
+        }
+
+        public static IReadOnlyCollection<Node> CreateNodes(Uri[] nodeUris)
+        {
+            return nodeUris
+                .Select(x => new Node(x.Host, x.Port.ToString(), x.Scheme))
+                .ToList();
         }
     }
 }

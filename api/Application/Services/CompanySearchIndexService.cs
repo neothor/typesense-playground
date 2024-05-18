@@ -1,8 +1,7 @@
-﻿namespace Api.Application
+﻿namespace Api.Application.Services
 {
     using Api.Domain;
     using Api.Infrastructure;
-    using Microsoft.Extensions.Options;
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
@@ -10,14 +9,13 @@
 
     public class CompanySearchIndexService : ICompanySearchIndexService
     {
+        private Schema _schema;
         private readonly ITypesenseClient _client;
         private readonly ILogger<CompanySearchIndexService> _logger;
-        private readonly TypesenseConfig _config;
 
-        public CompanySearchIndexService(ITypesenseClient client, ILogger<CompanySearchIndexService> logger, IOptions<TypesenseConfig> config)
+        public CompanySearchIndexService(ITypesenseClient client, ILogger<CompanySearchIndexService> logger)
         {
             _logger = logger;
-            _config = config.Value;
             _client = client;
         }
 
@@ -25,12 +23,13 @@
         {
             var schema = await ValidateCollection();
 
-            var importResults = await _client.ImportDocuments<Company>(
-                schema.Name, 
+            var importResults = await _client.ImportDocuments(
+                schema.Name,
                 companies,
                 importType: ImportType.Upsert);
 
-            if(importResults.Any(i => !i.Success)) {
+            if (importResults.Any(i => !i.Success))
+            {
                 var errors = importResults
                     .Where(x => !x.Success)
                     .GroupBy(x => x.Error)
@@ -45,30 +44,34 @@
 
         private async Task<Schema> ValidateCollection()
         {
-            var schema = GetSchema();
+            if(_schema != null)
+            {
+                return _schema;
+            }
+
+            _schema = GetSchema();
             var collection = await _client.RetrieveCollections()
-                .ContinueWith(x => x.Result.SingleOrDefault(c => c.Name == schema.Name));
+                .ContinueWith(x => x.Result.SingleOrDefault(c => c.Name == _schema.Name));
 
             if (collection == null)
             {
-                var result = await _client.CreateCollection(schema);
-                _logger.LogInformation("Created new collection {name}", schema.Name);
-                return schema;
+                var result = await _client.CreateCollection(_schema);
+                _logger.LogInformation("Created new collection {name}", _schema.Name);
+                return _schema;
             }
-                       
+
             // Needs to improve
-            if(collection.Fields.Count != schema.Fields.Count(f => f.Name != SchemaHelper.GetFieldName<Company>(x => x.Id)))
+            if (collection.Fields.Count != _schema.Fields.Count(f => f.Name != TypesenseHelper.GetFieldName<Company>(x => x.Id)))
             {
                 throw new NotImplementedException();
             }
 
-            return schema;
+            return _schema;
         }
-
 
         private static Schema GetSchema()
         {
-            return SchemaHelper.Create<Company>()
+            return TypesenseHelper.Create<Company>()
                 .AddField(x => x.Id, false)
                 .AddField(x => x.Tenant, false)
                 .AddField(x => x.CompanyName, false)

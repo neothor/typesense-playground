@@ -1,8 +1,9 @@
-using Api.Domain;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Api.Application.Controllers
 {
+    using Api.Application.Services;
+    using Api.Domain;
+    using Microsoft.AspNetCore.Mvc;
+
     [ApiController]
     [Route("tenants/{tenant}/[controller]")]
     public class CompaniesController : ControllerBase
@@ -18,12 +19,12 @@ namespace Api.Application.Controllers
 
         [HttpGet(Name = "GetCompanies")]
         public async Task<ActionResult<IEnumerable<Company>>> Get(
-            [FromRoute(Name = "tenant")]string tenant, 
+            [FromRoute(Name = "tenant")]char tenant, 
             [FromQuery(Name = "q")]string? query = null,
             [FromQuery]int limit = 20,
             [FromQuery]int skip = 0)
         {
-            var companies = await _companiesService.GetAsync(tenant, query, limit, skip);
+            var companies = await _companiesService.GetAsync(Tenant.GetTenantKey(tenant), query, limit, skip);
             return Ok(companies);
         }
     }

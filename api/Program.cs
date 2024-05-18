@@ -1,8 +1,9 @@
-using Api.Application;
 using Api.Domain;
 using Typesense.Setup;
-using System.Linq;
 using CompaniesRepository = Api.Domain.CompaniesRepository;
+using Api.Application.Services;
+using Api.Application.Jobs;
+using Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,17 +15,16 @@ var tsSection = builder.Configuration
 builder.Services
     .Configure<TypesenseConfig>(tsSection)
     .AddSingleton<ICompaniesRepository, CompaniesRepository>()
+    .AddSingleton<ISearchClientProvider, SearchClientProvider>()
     .AddTransient<ICompaniesService, CompaniesService>()
     .AddTransient<ICompanySearchService, CompanySearchService>()
     .AddTransient<ICompanySearchIndexService, CompanySearchIndexService>()
     .AddTypesenseClient(c => {
         var config = tsSection.Get<TypesenseConfig>()!;
         c.ApiKey = config.ApiKey;
-        c.Nodes = config.NodeUris
-            .Select(x => new Node(x.Host, x.Port.ToString(), x.Scheme))
-            .ToList();
+        c.Nodes = TypesenseHelper.CreateNodes(config.NodeUris);
     })
-    .AddHostedService<CompanyGenerationService>();
+    .AddHostedService<SearchIndexSeedingJob>();
 
 builder.Services.AddControllers(x => { });
 builder.Services.AddRouting(options => options.LowercaseUrls = true);

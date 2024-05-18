@@ -9,10 +9,9 @@ public class CompaniesRepository : ICompaniesRepository
         _companies = companies;
     }
 
-    public Task<IEnumerable<Company>> GetAsync(string tenant, Func<Company, bool>? where = null, int limit = 20,
-        int skip = 0)
+    public Task<IEnumerable<Company>> GetAsync(string tenant, Func<Company, bool>? where = null, int limit = 20, int skip = 0)
     {
-        var query = _companies.Where(c => c.Tenant == tenant);
+        var query = _companies.Where(c => c.Tenant.Equals(tenant, StringComparison.InvariantCultureIgnoreCase));
         if (where != null)
         {
             query = query.Where(where);

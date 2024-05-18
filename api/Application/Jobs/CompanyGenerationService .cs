@@ -1,17 +1,18 @@
-﻿namespace Api.Application
+﻿namespace Api.Application.Jobs
 {
+    using Api.Application.Services;
     using Api.Domain;
     using Bogus;
 
-    public class CompanyGenerationService : BackgroundService
+    public class SearchIndexSeedingJob : BackgroundService
     {
         private static readonly char[] Tenants = ['A', 'B', 'C'];
         private readonly ICompanySearchIndexService _indexService;
         private readonly ICompaniesRepository _repository;
-        private ILogger<CompanyGenerationService> _logger;
+        private ILogger<SearchIndexSeedingJob> _logger;
         private const int CompaniesPerTenant = 100;
 
-        public CompanyGenerationService(ICompanySearchIndexService indexService, ICompaniesRepository repository, ILogger<CompanyGenerationService> logger)
+        public SearchIndexSeedingJob(ICompanySearchIndexService indexService, ICompaniesRepository repository, ILogger<SearchIndexSeedingJob> logger)
         {
             _indexService = indexService;
             _repository = repository;
@@ -25,6 +26,11 @@
                 return;
             }
 
+            await IndexCompanies();
+        }
+
+        private async Task IndexCompanies()
+        {
             var companies = GenerateTenantsWithCompanies();
             await _indexService.IndexAsync(companies);
             _repository.SetSource(companies);
@@ -38,7 +44,7 @@
             {
                 var prefix = 10000 * multiplier;
                 var companyFaker = new Faker<Company>()
-                    .RuleFor(x => x.Tenant, f => $"tenant-{tenant}")
+                    .RuleFor(x => x.Tenant, f => Tenant.GetTenantKey(tenant))
                     .RuleFor(c => c.CompanyName, f => f.Company.CompanyName())
                     .RuleFor(c => c.Address, f => f.Address.StreetAddress())
                     .RuleFor(c => c.City, f => f.Address.City())

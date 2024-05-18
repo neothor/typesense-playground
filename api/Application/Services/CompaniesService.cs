@@ -1,6 +1,5 @@
+namespace Api.Application.Services;
 using Api.Domain;
-
-namespace Api.Application;
 
 public class CompaniesService : ICompaniesService
 {

@@ -1,4 +1,4 @@
-﻿namespace Api.Application
+﻿namespace Api.Application.Services
 {
     using Api.Domain;
 
