@@ -7,12 +7,14 @@
     {
         private static readonly char[] Tenants = ['A', 'B', 'C'];
         private readonly ICompanySearchIndexService _indexService;
+        private readonly ICompaniesRepository _repository;
         private ILogger<CompanyGenerationService> _logger;
         private const int CompaniesPerTenant = 100;
 
-        public CompanyGenerationService(ICompanySearchIndexService indexService, ILogger<CompanyGenerationService> logger)
+        public CompanyGenerationService(ICompanySearchIndexService indexService, ICompaniesRepository repository, ILogger<CompanyGenerationService> logger)
         {
             _indexService = indexService;
+            _repository = repository;
             _logger = logger;
         }
 
@@ -25,6 +27,7 @@
 
             var companies = GenerateTenantsWithCompanies();
             await _indexService.IndexAsync(companies);
+            _repository.SetSource(companies);
         }
 
         private List<Company> GenerateTenantsWithCompanies()

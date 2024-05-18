@@ -2,6 +2,7 @@ using Api.Application;
 using Api.Domain;
 using Typesense.Setup;
 using System.Linq;
+using CompaniesRepository = Api.Domain.CompaniesRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,9 @@ var tsSection = builder.Configuration
 
 builder.Services
     .Configure<TypesenseConfig>(tsSection)
+    .AddSingleton<ICompaniesRepository, CompaniesRepository>()
+    .AddTransient<ICompaniesService, CompaniesService>()
+    .AddTransient<ICompanySearchService, CompanySearchService>()
     .AddTransient<ICompanySearchIndexService, CompanySearchIndexService>()
     .AddTypesenseClient(c => {
         var config = tsSection.Get<TypesenseConfig>()!;
@@ -22,10 +26,12 @@ builder.Services
     })
     .AddHostedService<CompanyGenerationService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(x => { });
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 var app = builder.Build();
 
