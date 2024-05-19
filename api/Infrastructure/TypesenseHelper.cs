@@ -28,6 +28,11 @@
 
             return ctor((fieldName, fieldType));
         }
+        public static string GetQueryBy<T>(params Expression<Func<T, object>>[] expressions)
+            where T : IIndexable
+        {
+            return string.Join(",", expressions.Select(GetFieldName));
+        }
 
         public static string GetFieldName<T>(Expression<Func<T, object>> expression)
             where T : IIndexable

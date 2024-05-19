@@ -1,4 +1,6 @@
-﻿namespace Api.Application.Services
+﻿using System.Collections.Concurrent;
+
+namespace Api.Application.Services
 {
     using Api.Domain;
     using Api.Infrastructure;
@@ -15,16 +17,18 @@
         private readonly ITypesenseClient _client;
         private readonly TypesenseConfig _options;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<SearchClientProvider> _logger;
 
         private string _searchKey;
-        private readonly Dictionary<string, string> _tenantSearchKeys = new Dictionary<string, string>();
-        private readonly Dictionary<string, ITypesenseClient> _tenantSearchClients = new Dictionary<string, ITypesenseClient>();
+        private readonly ConcurrentDictionary<string, string> _tenantSearchKeys = new();
+        private readonly ConcurrentDictionary<string, ITypesenseClient> _tenantSearchClients = new();
 
-        public SearchClientProvider(ITypesenseClient mainClient, IOptions<TypesenseConfig> options, IHttpClientFactory httpClientFactory)
+        public SearchClientProvider(ITypesenseClient mainClient, IHttpClientFactory httpClientFactory, IOptions<TypesenseConfig> options, ILogger<SearchClientProvider> logger)
         {
             _client = mainClient;
             _options = options.Value;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public Task<ITypesenseClient> GetAdminClient()
@@ -40,8 +44,7 @@
             }
 
             client = await CreateTenantClient(tenant);
-            _tenantSearchClients.Add(tenant, client);
-            return client;
+            return _tenantSearchClients.TryAdd(tenant, client) ? client : _tenantSearchClients[tenant];
         }
 
         private async Task<ITypesenseClient> CreateTenantClient(string tenant)
@@ -74,21 +77,23 @@
             tenantKey = _client.GenerateScopedSearchKey(_searchKey, 
                 "{\"filter_by\":\"" + $"{TypesenseHelper.GetFieldName<Company>(x => x.Tenant)}:{tenant}" + "\"}");
 
-            _tenantSearchKeys.Add(tenant, tenantKey);
-            return tenantKey;
+            return _tenantSearchKeys.TryAdd(tenant, tenantKey) ? tenantKey : _tenantSearchKeys[tenant];
         }
 
         private async Task<string> GetOrCreateSearchKeyAsync()
         {
             var result = await _client.ListKeys();
-            var keyResponse = result.Keys.SingleOrDefault(x => x.Description == SearchKey);
-            if (keyResponse != null)
+            var existingKeys = result.Keys.Where(x => x.Description == SearchKey).ToList();
+            if (existingKeys.Any())
             {
-                return keyResponse.Value;
+                foreach (var existingKey in existingKeys)
+                {
+                    await _client.DeleteKey(existingKey.Id);
+                }
             }
 
-            var keyRequest = new Key(SearchKey, [SearchAction], [SearchAllCollection]);
-            keyResponse = await _client.CreateKey(keyRequest);
+            var keyRequest = new Key(SearchKey, new[] { SearchAction }, new[] { SearchAllCollection });
+            var keyResponse = await _client.CreateKey(keyRequest);
             return keyResponse.Value;
         }
     }

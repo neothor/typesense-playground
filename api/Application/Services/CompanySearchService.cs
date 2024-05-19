@@ -16,7 +16,8 @@
         public async Task<IEnumerable<IIndexable>> SearchAsync(string tenant, string query, int limit, int skip)
         {
             var client = await _searchClientProvider.GetSearchClient(tenant);
-            var searchParameters = new SearchParameters(query, TypesenseHelper.GetFieldName<Company>(x => x.CompanyName))
+            var searchParameters = new SearchParameters(query, TypesenseHelper.GetQueryBy<Company>(
+                x => x.CompanyName, x => x.Address))
             {
                 Limit = limit,
                 Offset = skip
